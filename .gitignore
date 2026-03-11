@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+data/raw/transactions.csv
+models/*.pkl
+.ipynb_checkpoints/
+
+# Agent-specific directories
+.gemini/
+brain/
+conversations/
+scratch/
+.system_generated/

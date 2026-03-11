@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudShield AI | Monitoring Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #a855f7;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --success: #22c55e;
+            --warning: #eab308;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 2rem;
+            background: linear-gradient(to right, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+
+        h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            color: var(--text-main);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-dim);
+        }
+
+        input, select {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            color: var(--text-main);
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            border: none;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: transform 0.2s, opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .result-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 10px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .score-label {
+            font-size: 0.875rem;
+            color: var(--text-dim);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.02);
+            padding: 1rem;
+            border-radius: 1rem;
+            text-align: center;
+        }
+
+        .stat-val {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .high-risk { color: var(--danger); border-color: var(--danger); }
+        .med-risk { color: var(--warning); border-color: var(--warning); }
+        .low-risk { color: var(--success); border-color: var(--success); }
+
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        #history {
+            margin-top: 2rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            color: var(--text-dim);
+            font-weight: 400;
+            font-size: 0.8rem;
+            padding-bottom: 1rem;
+        }
+
+        td {
+            padding: 1rem 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">FraudShield AI</div>
+        <div class="status-badge">
+            <div class="status-dot"></div>
+            ML Engine Online
+        </div>
+    </header>
+
+    <main>
+        <section class="card">
+            <h2>Simulate Transaction</h2>
+            <form id="fraudForm">
+                <div class="form-group">
+                    <label>Amount ($)</label>
+                    <input type="number" id="amount" value="1250" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Merchant Category</label>
+                    <select id="category">
+                        <option value="Retail">Retail</option>
+                        <option value="Electronics" selected>Electronics</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Food">Food</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Device Type</label>
+                    <select id="device">
+                        <option value="Mobile">Mobile</option>
+                        <option value="Desktop">Desktop</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prev. Transactions (30d)</label>
+                    <input type="number" id="prevCount" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Avg. Monthly Spending ($)</label>
+                    <input type="number" id="avgSpending" value="150">
+                </div>
+                <button type="submit" id="analyzeBtn">Analyze Risk</button>
+            </form>
+        </section>
+
+        <section class="card result-container">
+            <h2>Risk Assessment</h2>
+            <div id="no-result" style="text-align: center; padding: 2rem; color: var(--text-dim);">
+                Enter transaction details to see risk score
+            </div>
+            <div id="result-view" style="display: none;">
+                <div class="score-circle" id="scoreCircle">
+                    <span class="score-value" id="scoreValue">0</span>
+                    <span class="score-label">Risk Score</span>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Risk Level</span>
+                        <span class="stat-val" id="riskLevel">LOW</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Action</span>
+                        <span class="stat-val" id="actionVal">ALLOW</span>
+                    </div>
+                </div>
+
+                <div id="history">
+                    <h3>Recent Signal Analysis</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Amount</th>
+                                <th>Score</th>
+                                <th>Decision</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('fraudForm');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const noResult = document.getElementById('no-result');
+        const resultView = document.getElementById('result-view');
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            analyzeBtn.textContent = 'Analyzing...';
+            analyzeBtn.classList.add('loading');
+            
+            const payload = {
+                Transaction_ID: "TXN_" + Math.floor(Math.random() * 1000000),
+                User_ID: "USER_DEMO",
+                Transaction_Amount: parseFloat(document.getElementById('amount').value),
+                Transaction_Time: new Date().toISOString(),
+                Merchant_Category: document.getElementById('category').value,
+                Device_Type: document.getElementById('device').value,
+                Location: "New York",
+                Previous_Transaction_Count: parseInt(document.getElementById('prevCount').value),
+                Average_User_Spending: parseFloat(document.getElementById('avgSpending').value)
+            };
+
+            try {
+                // Mocking the API call for demonstration if backend isn't running
+                // In a real scenario, this would be fetch('http://localhost:8000/predict_transaction')
+                
+                // For the sake of the demo, we simulate a small delay
+                await new Promise(r => setTimeout(r, 800));
+                
+                // Simple logic to simulate ML model locally for the UI demo
+                let prob = 0.05;
+                if (payload.Transaction_Amount > 1000) prob += 0.4;
+                if (payload.Previous_Transaction_Count < 1) prob += 0.3;
+                if (payload.Merchant_Category === 'Electronics') prob += 0.1;
+                prob = Math.min(0.99, prob);
+
+                const data = {
+                    risk_score: prob * 100,
+                    risk_level: prob > 0.7 ? "HIGH" : (prob > 0.3 ? "MEDIUM" : "LOW"),
+                    recommended_action: prob > 0.7 ? "BLOCK" : (prob > 0.3 ? "CHALLENGE" : "ALLOW")
+                };
+
+                updateUI(data, payload);
+            } catch (err) {
+                console.error(err);
+                alert("API Error - Make sure the backend is running at localhost:8000");
+            } finally {
+                analyzeBtn.textContent = 'Analyze Risk';
+                analyzeBtn.classList.remove('loading');
+            }
+        });
+
+        function updateUI(data, payload) {
+            noResult.style.display = 'none';
+            resultView.style.display = 'block';
+            
+            const scoreVal = document.getElementById('scoreValue');
+            const circle = document.getElementById('scoreCircle');
+            const riskLevel = document.getElementById('riskLevel');
+            const actionVal = document.getElementById('actionVal');
+            
+            scoreVal.textContent = Math.round(data.risk_score);
+            riskLevel.textContent = data.risk_level;
+            actionVal.textContent = data.recommended_action;
+            
+            // Color updates
+            circle.className = 'score-circle';
+            riskLevel.className = 'stat-val';
+            
+            if (data.risk_level === "HIGH") {
+                circle.classList.add('high-risk');
+                riskLevel.classList.add('high-risk');
+            } else if (data.risk_level === "MEDIUM") {
+                circle.classList.add('med-risk');
+                riskLevel.classList.add('med-risk');
+            } else {
+                circle.classList.add('low-risk');
+                riskLevel.classList.add('low-risk');
+            }
+
+            // History
+            const row = `<tr>
+                <td>${new Date().toLocaleTimeString()}</td>
+                <td>$${payload.Transaction_Amount}</td>
+                <td>${Math.round(data.risk_score)}</td>
+                <td style="color: ${data.risk_level === 'HIGH' ? '#ef4444' : (data.risk_level === 'MEDIUM' ? '#eab308' : '#22c55e')}">${data.recommended_action}</td>
+            </tr>`;
+            document.getElementById('historyBody').insertAdjacentHTML('afterbegin', row);
+        }
+    </script>
+</body>
+</html>
